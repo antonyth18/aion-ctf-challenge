@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -46,7 +45,7 @@ func (s *Session) Reset() {
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	sess := sessionPool.Get().(*Session)
-	
+
 	defer func() {
 		sess.Reset()
 		sessionPool.Put(sess)
@@ -69,7 +68,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	cmd := r.URL.Query().Get("cmd")
 	if cmd != "" {
 		sess.History = append(sess.History, cmd)
-		
+
 		if sess.PrivilegeLevel == "ADMIN" {
 			output := runDiagnostics(cmd)
 			fmt.Fprintf(w, "COMMANDER AUTHORIZED.\nResult: %s\n", output)
@@ -87,7 +86,7 @@ func runDiagnostics(input string) string {
 	if strings.Contains(input, "flag") || strings.Contains(input, "cat") {
 		return "MALICIOUS INPUT DETECTED"
 	}
-	
+
 	// Vulnerable echo wrapper
 	cmd := exec.Command("sh", "-c", "echo Running: "+input)
 	out, err := cmd.CombinedOutput()
@@ -119,5 +118,6 @@ func adminBot() {
 func main() {
 	go adminBot()
 	http.HandleFunc("/", mainHandler)
+	log.Println("Server starting on :8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
